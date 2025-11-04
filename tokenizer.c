@@ -9,9 +9,11 @@ void token_append(token_list_t *l, token_t t, size_t *occupied, size_t *allocate
         *allocated *= 2;
         *l = realloc(*l, (*allocated) * sizeof(token_t));
         if (!*l) { ERROR_INFO("realloc", 1); exit(1); }
+    } else if (*occupied > *allocated) {
+        ERROR("Memory wrong");
     }
 
-    (*l)[(*occupied)++] = t;
+    memcpy((*l) + (*occupied)++, &t, sizeof(token_t));
 }
 
 /**
@@ -33,18 +35,21 @@ token_array_t mp_tokenize(preprocessor_info_t ppi) {
     int8_t parenthesis_weight = 0;
     uint8_t left_add_mul = 0;
 
-    token_t mul_token = {OPERATION_MUL, 0, 0.0f, NULL, 0};
+    //Implicit multiplication token e.g 7x -> 7, '*', 'x'
+    token_t mul_token = {OPERATION_MUL, 0, 0, NULL, 0};
+    mul_token.type = OPERATION_MUL;
 
 Init:
     memset(number, 0, sizeof(number));
-    token_t curr = {INVALID, 0, 0.0f, NULL, 0};
+    token_t curr = {INVALID, 0, 0, NULL, 0};
 
     switch (*ptr) {
         case 0: goto exit;
-        case '+': curr.type = OPERATION_ADD; ptr++; token_append(&list, curr, &occupied, &allocated); goto Init;
-        case '-': curr.type = OPERATION_SUB; ptr++; token_append(&list, curr, &occupied, &allocated); goto Init;
-        case '/': curr.type = OPERATION_DIV; ptr++; token_append(&list, curr, &occupied, &allocated); goto Init;
-        case '*': curr.type = OPERATION_MUL; ptr++; token_append(&list, curr, &occupied, &allocated); goto Init;
+        case '+': left_add_mul=0;curr.type = OPERATION_ADD; ptr++; token_append(&list, curr, &occupied, &allocated); goto Init;
+        case '-': left_add_mul=0;curr.type = OPERATION_SUB; ptr++; token_append(&list, curr, &occupied, &allocated); goto Init;
+        case '/': left_add_mul=0;curr.type = OPERATION_DIV; ptr++; token_append(&list, curr, &occupied, &allocated); goto Init;
+        case '*': left_add_mul=0;curr.type = OPERATION_MUL; ptr++; token_append(&list, curr, &occupied, &allocated); goto Init;
+        case '^': left_add_mul=0;curr.type = OPERATION_EXP; ptr++; token_append(&list, curr, &occupied, &allocated); goto Init;
 
         case '(':
             curr.type = PARENTHESIS_OPEN;
@@ -55,12 +60,15 @@ Init:
 
         case ')':
             curr.type = PARENTHESIS_CLOSE;
+            
             parenthesis_weight--;
             ptr++; token_append(&list, curr, &occupied, &allocated); goto Init;
 
         default:
             if (isdigit(*ptr) || *ptr == '.') {
-                if (left_add_mul) token_append(&list, mul_token, &occupied, &allocated);
+                if (left_add_mul) {
+                    token_append(&list, mul_token, &occupied, &allocated);
+                }
                 left_add_mul = 0;
                 goto number;
             } else if (isalpha(*ptr)) {

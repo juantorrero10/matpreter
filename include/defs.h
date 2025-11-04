@@ -44,6 +44,7 @@ typedef enum _token_cathegory_enum {
     OPERATION_SUB,
     OPERATION_MUL,
     OPERATION_DIV,
+    OPERATION_EXP,
     LITERAL_CONSTANT,
     LITERAL_VARIABLE,
     LITERAL_LAMBDA

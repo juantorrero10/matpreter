@@ -5,7 +5,7 @@ void print_ppi_info(preprocessor_info_t ppi) {
     INFO("Preprocessor returned: ");
     DUMP("FUNC NAME: %s", ppi.info.name);
     DUMP("VARIABLES: amount -> %lu", ppi.info.var_count);
-    printf("                ");
+    printf("    ");
     for (size_t i = 0; i < ppi.info.var_count; i++)
     {
         printf("%c", ppi.info.variables[i].letter);
@@ -21,12 +21,13 @@ void print_ppi_info(preprocessor_info_t ppi) {
 const char* token_type_str(token_cathegory_t t) {
     switch (t) {
         case INVALID:           return "INVALID";
-        case OPERATION_ADD:     return "ADD '+'";
-        case OPERATION_SUB:     return "SUB '-'";
-        case OPERATION_MUL:     return "MUL '*'";
-        case OPERATION_DIV:     return "DIV '/'";
-        case PARENTHESIS_OPEN:  return "PARENTHESIS '('";
-        case PARENTHESIS_CLOSE: return "PARENTHESIS ')'";
+        case OPERATION_ADD:     return "'+' ADD";
+        case OPERATION_SUB:     return "'-' SUB";
+        case OPERATION_MUL:     return "'*' MUL";
+        case OPERATION_DIV:     return "'/' DIV";
+        case OPERATION_EXP:     return "'^' EXP";
+        case PARENTHESIS_OPEN:  return "'(' P/OPEN";
+        case PARENTHESIS_CLOSE: return "')' P/CLOSE";
         case LITERAL_CONSTANT:  return "LITERAL/CONST";
         case LITERAL_VARIABLE:  return "LITERAL/VAR";
         default:                return "UNKNOWN";
@@ -38,22 +39,20 @@ print_tokens(token_array_t arr, preprocessor_info_t ppi) {
         INFO("No tokens to display.");
         return;
     }
-
-    INFO("Token dump (%zu tokens):", arr.sz);
     SEP();
+    INFO("Tokens created (%zu tokens):", arr.sz);
     for (size_t i = 0; i < arr.sz; i++) {
         token_t *t = &arr.ptr[i];
 
-        DUMP("[%02zu] %-15s", i, token_type_str(t->type));
-
         switch (t->type) {
             case LITERAL_VARIABLE:
-                INDENTED(" | char='%c'", (unsigned long long)ppi.info.variables[t->value_i].letter);
+                DUMP("[%02zu] '%c'-> %-15s", i, (unsigned long long)ppi.info.variables[t->value_i].letter, token_type_str(t->type));
                 break;
             case LITERAL_CONSTANT:
-                INDENTED(" | value=%g", t->value_r);
+                DUMP("[%02zu] %g -> %-15s", i, t->value_r, token_type_str(t->type));
                 break;
             default:
+                DUMP("[%02zu] %-15s", i, token_type_str(t->type));
                 break;
         }
     }
@@ -70,6 +69,5 @@ errcode mp_parse(const char* instruction) {
     print_tokens(a, ppi);
     free(a.ptr);
     free(ppi.body);
-    free(&ppi);
     return 0;
 }

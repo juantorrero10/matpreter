@@ -1,6 +1,6 @@
 TARGET = matpreter
 CC = gcc
-CFLAGS = -Wall -Wextra -std=c17 -Iinclude -g
+CFLAGS = -Wall -Wextra -std=c17 -Iinclude -g -m64
 
 SRC = main.c tokenizer.c preprocessor.c parse.c
 OBJ_DIR = build/obj
@@ -12,7 +12,7 @@ BIN = $(BIN_DIR)/$(TARGET)
 all: $(BIN)
 
 # --- Build final executable ---
-$(BIN): $(OBJ)
+$(BIN): $(OBJ) | $(BIN_DIR)
 	@echo "Linking -> $@"
 	$(CC) $(CFLAGS) -o $@ $(OBJ)
 

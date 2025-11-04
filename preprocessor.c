@@ -74,7 +74,8 @@ preprocessor_info_t mp_preprocessor(const char *instruction) {
 
 _return:
     // --- 5. Copy body ---
-    pre.body = strdup(rhs);
+    pre.body = malloc(strlen(rhs) + 1);
+    strcpy(pre.body, rhs);
 
     return pre;
 }
