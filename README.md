@@ -6,21 +6,20 @@ tokenizing, parsing, building abstract syntax trees (ASTs), and eventually execu
 
 ---
 
-## 🎯 Project Goals
 
-- Build a tokenizer and parser for a small mathematical language  
-- Support arithmetic operations (`+`, `-`, `*`, `/`, `^`, parentheses, variables, constants)  
-- Represent parsed expressions as **ASTs** (Abstract Syntax Trees)  
-- Evaluate expressions interactively or compile them into executable code (future goal)  
-- Learn about **language design**, **compiler frontends**, and **runtime code generation (LLVM)**  
-
+## Compiling
+**Dependencies**
+- make:
+- gcc
+- _in the future:_ LLVM
 ---
+**Building the binary**
 
-
-# Compile/run/launch gdb session/clean
-´´´bash
-make
-make run
-make debug
-make clean
-´´´
+	# Installing dependencies
+	sudo apt install make
+	sudo apt install gcc
+---
+	make		# Compile
+	make run	# Compile/run
+	make debug	# Compile/launch gdb session
+	make clean  # Clean all object/binary files
