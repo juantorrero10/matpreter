@@ -16,13 +16,11 @@ tokenizing, parsing, building abstract syntax trees (ASTs), and eventually execu
 
 ---
 
-Compile/run/debug
+
+# Compile/run/launch gdb session/clean
 ´´´bash
-# Compile
 make
-# Compile/run
 make run
-# Compile/launch gdb session
 make debug
-# Clean all files
 make clean
+´´´
