@@ -2,7 +2,7 @@ TARGET = matpreter
 CC = gcc
 CFLAGS = -Wall -Wextra -std=c17 -Iinclude -g
 
-SRC = main.c tokenizer.c preprocessor.c
+SRC = main.c tokenizer.c preprocessor.c parse.c
 OBJ_DIR = build/obj
 BIN_DIR = build/bin
 OBJ = $(SRC:%.c=$(OBJ_DIR)/%.o)
