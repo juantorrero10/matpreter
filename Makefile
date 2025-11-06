@@ -5,6 +5,7 @@ CFLAGS = -Wall -Wextra -std=c17 -Iinclude -g -m64
 SRC = demo.c tokenizer.c preprocessor.c parse.c
 OBJ_DIR = build/obj
 BIN_DIR = build/bin
+SRC_DIR = src
 OBJ = $(SRC:%.c=$(OBJ_DIR)/%.o)
 BIN = $(BIN_DIR)/$(TARGET)
 
@@ -17,7 +18,7 @@ $(BIN): $(OBJ) | $(BIN_DIR)
 	$(CC) $(CFLAGS) -o $@ $(OBJ)
 
 # --- Compile each .c file into build/obj ---
-$(OBJ_DIR)/%.o: %.c | $(OBJ_DIR)
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
 	@echo "Compiling -> $<"
 	$(CC) $(CFLAGS) -c $< -o $@
 

@@ -69,11 +69,29 @@ typedef struct _token_info_return_type {
     errcode st;
 }token_array_t;
 
+typedef struct _token_binary_tree_ast {
+    token_t root;
+    struct _token_binary_tree_ast* lhs;
+    struct _token_binary_tree_ast* rhs;
+}token_btree_t;
 /*-------------FUNCTIONS-----------------*/
+typedef int64_t errocode;
 
-errcode mp_parse(const char* instruction);
-token_array_t mp_tokenize(preprocessor_info_t ppi);
+/*-------------------MAIN CHAIN----------------------------------*/
+errcode mp_parse(const char* instruction);/*˥
+                   _________________________˩
+                  ꜒
+                  ↓                                                                   */
 preprocessor_info_t mp_preprocessor(const char *instruction);
+/*                ꜖__
+                     ˥
+                     ↓                                                                */
+token_array_t mp_tokenize(preprocessor_info_t ppi);
+/*                   ꜖___________________________________________________
+                                                                         ˥            */
+token_btree_t* mp_createAST(token_array_t array, errcode* control);/*<---˩            */
 
+/*--------Additional------------------------*/
+void mp_token_append(token_list_t *l, token_t t, size_t *occupied, size_t *allocated);
 
 #endif // DEFS_H_
