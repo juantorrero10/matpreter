@@ -9,6 +9,6 @@
 
 
 int main(void) {
-    mp_parse("f(a, b, c, d) = (2.5a - (3b + 4*(c - d/2))^2) / ((a + b) * (c + d)) + 1.75");
+    mp_parse("f(x, y) = 7x(-3 + y) * 3y + 4.6x^2 + y/2");
     return 0;
 }

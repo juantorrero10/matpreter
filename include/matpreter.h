@@ -1,7 +1,7 @@
 #ifndef MATPRETER_H_
 #define MATPRETER_H_
 
-#define DO_LOG
+#define __DEBUG
 
 #include "./include.h"
 #include "./defs.h"

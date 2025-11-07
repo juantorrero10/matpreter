@@ -5,7 +5,7 @@
 #include <stdio.h>
 
 //LOG MACROS
-#ifdef DO_LOG
+#ifdef __DEBUG
 #define NL() printf("\r\n");
 #define SEP() printf("----------------------------------------\r\n");
 #define LOG_SUCCESS(MSG, ...) printf("[\x1b[35mS\x1b[0m] \x1b[35mSuccess!!\x1b[0m: "    MSG"\r\n", ##__VA_ARGS__)

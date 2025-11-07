@@ -3,6 +3,8 @@
 
 #include "./macros.h"
 
+typedef uint8_t _bool;
+
 /*-------------STRUCTS/ENUMS------------------*/
 typedef int64_t errcode;
 enum instruction_t {
@@ -35,17 +37,20 @@ typedef struct {
     errcode st;
 } preprocessor_info_t;
 
-//Tokenizer
+/*-------------TOKENIZER---------------*/
+
 typedef enum _token_cathegory_enum {
-    INVALID,
+    //Special
+    INVALID = TC_START_IDX,
     PARENTHESIS_OPEN,
     PARENTHESIS_CLOSE,
-    OPERATION_ADD,
+    //Oepr
+    OPERATION_ADD = TC_OPERATIONS_IDX,
     OPERATION_SUB,
     OPERATION_MUL,
     OPERATION_DIV,
     OPERATION_EXP,
-    LITERAL_CONSTANT,
+    LITERAL_CONSTANT = TC_LITERALS_IDX,
     LITERAL_VARIABLE,
     LITERAL_LAMBDA
 }token_cathegory_t;
@@ -66,6 +71,7 @@ typedef token_t* token_list_t;
 typedef struct _token_info_return_type {
     token_list_t ptr;
     size_t sz;
+    size_t allocated;
     errcode st;
 }token_array_t;
 
