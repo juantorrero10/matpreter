@@ -3,6 +3,7 @@
 
 #include "./macros.h"
 
+
 typedef uint8_t _bool;
 
 /*-------------STRUCTS/ENUMS------------------*/
@@ -34,12 +35,12 @@ typedef struct {
     enum instruction_t type;
     definition_info_t info;
     char *body;               // body expression, e.g. "7x+3"
-    errcode st;
+    errcode st;               // return errorcode from preprocessor, unused otherwise
 } preprocessor_info_t;
 
 /*-------------TOKENIZER---------------*/
 
-typedef enum _token_cathegory_enum {
+typedef enum _token_category_enum {
     //Special
     INVALID = TC_START_IDX,
     PARENTHESIS_OPEN,
@@ -53,17 +54,13 @@ typedef enum _token_cathegory_enum {
     LITERAL_CONSTANT = TC_LITERALS_IDX,
     LITERAL_VARIABLE,
     LITERAL_LAMBDA
-}token_cathegory_t;
+}token_category_t;
 
 
 typedef struct _token_type {
-    //Tokenizer job
-    token_cathegory_t type;
-    uint64_t value_i;
+    token_category_t type;
+    int64_t value_i;
     double value_r;
-    //Parser's job
-    struct _token_type** conections;
-    uint64_t connected_to;
 }token_t;
 
 typedef token_t* token_list_t;
@@ -72,7 +69,7 @@ typedef struct _token_info_return_type {
     token_list_t ptr;
     size_t sz;
     size_t allocated;
-    errcode st;
+    errcode st;         //return errorcode from tokenizer, unused otherwise
 }token_array_t;
 
 typedef struct _token_binary_tree_ast {
@@ -81,7 +78,6 @@ typedef struct _token_binary_tree_ast {
     struct _token_binary_tree_ast* rhs;
 }token_btree_t;
 /*-------------FUNCTIONS-----------------*/
-typedef int64_t errocode;
 
 /*-------------------MAIN CHAIN----------------------------------*/
 errcode mp_parse(const char* instruction);/*˥
@@ -99,5 +95,6 @@ token_btree_t* mp_createAST(token_array_t array, errcode* control);/*<---˩     
 
 /*--------Additional------------------------*/
 void mp_token_append(token_list_t *l, token_t t, size_t *occupied, size_t *allocated);
+void mp_freeAST(token_btree_t* tree, void (*deallocator) (void*));
 
 #endif // DEFS_H_

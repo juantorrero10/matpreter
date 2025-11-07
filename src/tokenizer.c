@@ -33,15 +33,17 @@ token_array_t mp_tokenize(preprocessor_info_t ppi) {
     char *ptr = ppi.body;
     char number[32];
     int8_t parenthesis_weight = 0;
-    _bool left_add_mul = 0;
+
+     //Add implicit * in expressions like 7x -> 7*x, or 3(...) -> 3*(...)
+    _bool left_add_mul = 0;    
 
     //Implicit multiplication token e.g 7x -> 7, '*', 'x'
-    token_t mul_token = {OPERATION_MUL, 0, 0, NULL, 0};
+    token_t mul_token = {OPERATION_MUL, 0, 0};
     mul_token.type = OPERATION_MUL;
 
 Init:
     memset(number, 0, sizeof(number));
-    token_t curr = {INVALID, 0, 0, NULL, 0};
+    token_t curr = {INVALID, 0, 0};
 
     switch (*ptr) {
         case 0: goto exit;

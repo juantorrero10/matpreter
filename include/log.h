@@ -10,6 +10,7 @@
 #define SEP() printf("----------------------------------------\r\n");
 #define LOG_SUCCESS(MSG, ...) printf("[\x1b[35mS\x1b[0m] \x1b[35mSuccess!!\x1b[0m: "    MSG"\r\n", ##__VA_ARGS__)
 
+#define LOG(MSG, ...) printf(MSG, ##__VA_ARGS__)
 #define OKAY(MSG, ...) printf("\x1b[32m[+]\x1b[0m ["LOG_LABEL"] "          MSG "\r\n", ##__VA_ARGS__)
 #define INFO(MSG, ...) printf("\x1b[34m[*]\x1b[0m ["LOG_LABEL"] "          MSG "\r\n", ##__VA_ARGS__)
 #define WARN(MSG, ...) printf("\x1b[33m[-]\x1b[0m ["LOG_LABEL"] "          MSG "\r\n", ##__VA_ARGS__)

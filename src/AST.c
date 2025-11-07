@@ -23,6 +23,22 @@ static void append_token_array(token_array_t* arr, token_t t) {
 }
 
 /**
+ * @brief helper function to split_token_array() for excluding parenthesis 
+ */
+static _bool are_outer_parens_balanced(const token_array_t arr) {
+    if (arr.sz < 2) return 0;
+    if (arr.ptr[0].type != PARENTHESIS_OPEN ||
+        arr.ptr[arr.sz - 1].type != PARENTHESIS_CLOSE) return 0;
+    int depth = 0;
+    for (size_t i = 0; i < arr.sz - 1; i++) {
+        if (arr.ptr[i].type == PARENTHESIS_OPEN) depth++;
+        else if (arr.ptr[i].type == PARENTHESIS_CLOSE) depth--;
+        if (depth == 0 && i < arr.sz - 2)
+            return 0; // closed before end → not an outer pair
+    }
+    return 1;
+}
+/**
  * @brief Split an original token array into two parts
  * @attention - Output arrays are views, NOT copies but pointers inide the original one.
  *              Operations should not be perfomed, specially on the left one.
@@ -42,29 +58,33 @@ static token_t split_token_array(
     _out_ token_array_t* left, _out_ token_array_t* right
 ) 
 {
-    _bool t = 0;    //temp bool for sizing in excluding parenthesis
-    *left  = (token_array_t){ .ptr = NULL, .sz = 0, .allocated = 0, .st = 0 };
-    *right = (token_array_t){ .ptr = NULL, .sz = 0, .allocated = 0, .st = 0 };
+    *left  = (token_array_t){0};
+    *right = (token_array_t){0};
+
+    if (idx >= og.sz)
+        return (token_t){.type = INVALID};
 
     //Left hand side
     if (idx != 0) {
-        //Exclude parenthesis
-        if (og.ptr[0].type == PARENTHESIS_OPEN 
-            && og.ptr[idx - 1].type == PARENTHESIS_CLOSE) t = 1;
-        left->ptr = og.ptr + t;
-        left->sz = left->allocated = idx - t;
+        left->ptr = og.ptr;
+        left->sz = left->allocated = idx;
     }
-    t = 0;
 
     //Right hand side
-    if (idx < og.sz) {
-        //Exclude parenthesis
-        if (og.ptr[idx + 1].type == PARENTHESIS_OPEN 
-            && og.ptr[og.sz - 1].type == PARENTHESIS_CLOSE) t = 1;
+    if (idx  + 1 < og.sz) {
+        right->ptr = og.ptr + idx + 1;
+        right->sz = og.sz - idx - 1;
+        right->allocated = og.allocated - idx - 1;
+    }
 
-        right->ptr = og.ptr + idx + 1 + t;
-        right->sz = og.sz - idx - 1 - t;
-        right->allocated = og.allocated - idx - 1 - t;
+    // Remove outer parentheses if entire side is wrapped
+    if (are_outer_parens_balanced(*left)) {
+        left->ptr++;
+        left->sz -= 2;
+    }
+    if (are_outer_parens_balanced(*right)) {
+        right->ptr++;
+        right->sz -= 2;
     }
 
     //Return either token at idx or an invalid one.
@@ -86,7 +106,7 @@ token_btree_t* mp_createAST(const token_array_t array, errcode* control)
 
     size_t read_idx = 0;
     token_array_t lhs, rhs;
-    _bool seenParen = 0;
+    uint32_t seenParen = 0;         //N of seen parenthesis, aka. parenthesis depth
 
     //Search from lower importance to greater.
     // ^  >  */  > +-
@@ -96,8 +116,8 @@ token_btree_t* mp_createAST(const token_array_t array, errcode* control)
         token_t curr = array.ptr[read_idx];
 
         //Parenthesis, First in the chain
-        if      (curr.type == PARENTHESIS_OPEN)  seenParen = 1;
-        else if (curr.type == PARENTHESIS_CLOSE) seenParen = 0;
+        if      (curr.type == PARENTHESIS_OPEN)  seenParen++;
+        else if (curr.type == PARENTHESIS_CLOSE) seenParen--;
 
         
         if ((curr.type == OPERATION_ADD || curr.type == OPERATION_SUB) && seenParen == 0) {
@@ -113,7 +133,7 @@ token_btree_t* mp_createAST(const token_array_t array, errcode* control)
             //If rhs token isnt a literal -> Unexpected token, colapse recursion
             if (rhs.ptr == NULL || rhs.ptr[0].type < TC_LITERALS_IDX) {
                 *control = read_idx + 1;
-                ERROR("Unexpected, token: %lld", *control);
+                ERROR("Unexpected token: %lld", *control);
                 return create_binary_tree((token_t){.type = INVALID}, NULL, NULL);
             }
 
@@ -130,16 +150,16 @@ token_btree_t* mp_createAST(const token_array_t array, errcode* control)
         token_t curr = array.ptr[read_idx];
 
         //Parenthesis, First in the chain
-        if      (curr.type == PARENTHESIS_OPEN)  seenParen = 1;
-        else if (curr.type == PARENTHESIS_CLOSE) seenParen = 0;
+        if      (curr.type == PARENTHESIS_OPEN)  seenParen++;
+        else if (curr.type == PARENTHESIS_CLOSE) seenParen--;
         
         if ((curr.type == OPERATION_MUL || curr.type == OPERATION_DIV) && seenParen == 0){
             split_token_array(array, read_idx, &lhs, &rhs);
 
             //Unexpected token, colapse recursion
-            if (lhs.ptr == NULL || rhs.ptr == NULL || rhs.ptr[0].type < TC_LITERALS_IDX) {
+            if (lhs.ptr == NULL || rhs.ptr == NULL || (rhs.ptr[0].type < TC_LITERALS_IDX && rhs.ptr[0].type != PARENTHESIS_OPEN)) {
                 *control = read_idx + 1;
-                ERROR("Unexpected, token: %lld", *control);
+                ERROR("Unexpected token: %lld", *control);
                 return create_binary_tree((token_t){.type = INVALID}, NULL, NULL);
             }
 
@@ -148,14 +168,14 @@ token_btree_t* mp_createAST(const token_array_t array, errcode* control)
         }
         read_idx++;
     }
-
+    read_idx = 0;
     //  (^)
     while (read_idx < array.sz) {
         token_t curr = array.ptr[read_idx];
 
         //Parenthesis, First in the chain
-        if      (curr.type == PARENTHESIS_OPEN)  seenParen = 1;
-        else if (curr.type == PARENTHESIS_CLOSE) seenParen = 0;
+        if      (curr.type == PARENTHESIS_OPEN)  seenParen++;
+        else if (curr.type == PARENTHESIS_CLOSE) seenParen--;
         
         if ((curr.type == OPERATION_EXP) && seenParen == 0){
             split_token_array(array, read_idx, &lhs, &rhs);
@@ -163,7 +183,7 @@ token_btree_t* mp_createAST(const token_array_t array, errcode* control)
             //Unexpected token, colapse recursion
             if (lhs.ptr == NULL || rhs.ptr == NULL || rhs.ptr[0].type < TC_LITERALS_IDX) {
                 *control = read_idx + 1;
-                ERROR("Unexpected, token: %lld", *control);
+                ERROR("Unexpected token: %lld", *control);
                 return create_binary_tree((token_t){.type = INVALID}, NULL, NULL);
             }
 
@@ -183,4 +203,22 @@ token_btree_t* mp_createAST(const token_array_t array, errcode* control)
         return create_binary_tree((token_t){.type = INVALID}, NULL, NULL);
     }
 
+}
+
+/**
+ * Recursive freeing of an AST
+ * @param tree pointer to tree
+ * @param deallocator function ptr to deallocator
+ */
+void mp_freeAST(token_btree_t* tree, void (*deallocator) (void*)) {
+    if (tree == NULL) return;
+    //This language doesn't produce "one-branched" nodes
+    if (tree->lhs == NULL && tree->rhs == NULL) {
+        deallocator(tree);
+        return;
+    }
+    mp_freeAST(tree->lhs, deallocator); mp_freeAST(tree->rhs, deallocator);
+    tree->lhs = NULL; tree->rhs = NULL;
+    return;
+    
 }
