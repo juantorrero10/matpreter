@@ -80,7 +80,7 @@ typedef struct _token_binary_tree_ast {
 /*-------------FUNCTIONS-----------------*/
 
 /*-------------------MAIN CHAIN----------------------------------*/
-errcode mp_parse(const char* instruction);/*˥
+token_btree_t* mp_parse(const char* instruction);/*˥
                    _________________________˩
                   ꜒
                   ↓                                                                   */
@@ -96,5 +96,7 @@ token_btree_t* mp_createAST(token_array_t array, errcode* control);/*<---˩     
 /*--------Additional------------------------*/
 void mp_token_append(token_list_t *l, token_t t, size_t *occupied, size_t *allocated);
 void mp_freeAST(token_btree_t* tree, void (*deallocator) (void*));
+errcode mp_evaluateAST(token_btree_t* AST, token_list_t leftright_vars, int num_vars,
+        _out_ double* value_d, _out_ int64_t* value_i) ;
 
 #endif // DEFS_H_

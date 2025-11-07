@@ -131,7 +131,7 @@ token_btree_t* mp_createAST(const token_array_t array, errcode* control)
             }
 
             //If rhs token isnt a literal -> Unexpected token, colapse recursion
-            if (rhs.ptr == NULL || rhs.ptr[0].type < TC_LITERALS_IDX) {
+            if (rhs.ptr == NULL || (rhs.ptr[0].type < TC_LITERALS_IDX && rhs.ptr[0].type != PARENTHESIS_OPEN)) {
                 *control = read_idx + 1;
                 ERROR("Unexpected token: %lld", *control);
                 return create_binary_tree((token_t){.type = INVALID}, NULL, NULL);
@@ -181,7 +181,7 @@ token_btree_t* mp_createAST(const token_array_t array, errcode* control)
             split_token_array(array, read_idx, &lhs, &rhs);
 
             //Unexpected token, colapse recursion
-            if (lhs.ptr == NULL || rhs.ptr == NULL || rhs.ptr[0].type < TC_LITERALS_IDX) {
+            if (lhs.ptr == NULL || rhs.ptr == NULL || (rhs.ptr[0].type < TC_LITERALS_IDX && rhs.ptr[0].type != PARENTHESIS_OPEN)) {
                 *control = read_idx + 1;
                 ERROR("Unexpected token: %lld", *control);
                 return create_binary_tree((token_t){.type = INVALID}, NULL, NULL);
@@ -212,13 +212,10 @@ token_btree_t* mp_createAST(const token_array_t array, errcode* control)
  */
 void mp_freeAST(token_btree_t* tree, void (*deallocator) (void*)) {
     if (tree == NULL) return;
+
     //This language doesn't produce "one-branched" nodes
-    if (tree->lhs == NULL && tree->rhs == NULL) {
-        deallocator(tree);
-        return;
-    }
     mp_freeAST(tree->lhs, deallocator); mp_freeAST(tree->rhs, deallocator);
-    tree->lhs = NULL; tree->rhs = NULL;
+    deallocator(tree);
     return;
     
 }

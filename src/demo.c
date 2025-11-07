@@ -9,6 +9,19 @@
 
 
 int main(void) {
-    mp_parse("f(x, y) = -7x(-3 + y) * 3y + 4.6x^2 + y/2");
+    token_btree_t* f = mp_parse("f(x) = x^3 - 4x^2 + 2");
+    
+    //Evaluate f(0) to f(9)
+    for (size_t i = 0; i < 10; i++)
+    {
+        double out_r = 0.0f;
+        int64_t out_i = 0.0f;
+        token_t x = {.type=LITERAL_CONSTANT, .value_i = 0, .value_r = (double)i};
+        mp_evaluateAST(f, &x, 1, &out_r, &out_i);
+        INFO("f(%llu) = %f", i, out_r);
+    }
+    
+
+    mp_freeAST(f, free);
     return 0;
 }

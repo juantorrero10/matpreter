@@ -1,7 +1,7 @@
 #include <matpreter.h>
 #include <mpdisplay.h>
 
-errcode mp_parse(const char* instruction) {
+token_btree_t* mp_parse(const char* instruction) {
     INFO("Parse received %s", instruction);
 
     preprocessor_info_t ppi = mp_preprocessor(instruction);
@@ -18,9 +18,7 @@ errcode mp_parse(const char* instruction) {
 
     OKAY("Refresh my memory: %s", instruction);
 
-    mp_freeAST(b, free);
-    free(b);
     free(a.ptr);
     free(ppi.body);
-    return 0;
+    return b;
 }
