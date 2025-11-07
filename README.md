@@ -16,8 +16,7 @@ tokenizing, parsing, building abstract syntax trees (ASTs), and eventually execu
 **Building the binary**
 
 	# Installing dependencies
-	sudo apt install make
-	sudo apt install gcc
+	sudo apt install make gcc
 ---
 	make		# Compile
 	make run	# Compile/run
