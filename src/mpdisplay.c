@@ -84,7 +84,6 @@ void mpd_print_token(const token_t *t, preprocessor_info_t ppi) {
 char mpd_char_token(const token_t *t, preprocessor_info_t ppi) {
     if (!t) {
         return 'n';
-        return;
     }
 
     switch (t->type) {
@@ -95,7 +94,7 @@ char mpd_char_token(const token_t *t, preprocessor_info_t ppi) {
             return ppi.info.var_letters[t->value_i];
             break;
         default:
-            char* s = mpd_token_type_str(t->type, 0);
+            const char* s = mpd_token_type_str(t->type, 0);
             return s[0];
             break;
     }

@@ -89,7 +89,7 @@ static token_t split_token_array(
 }
 
 static void display_unexpected_token(const token_array_t* a, token_t* t, uint64_t pos, preprocessor_info_t ppi) {
-    ERROR("AST: Unexpected token: '%c' at position: %lu/%lld", mpd_char_token(t, ppi), pos, a->sz);
+    ERROR("AST: Unexpected token: '%c' at position: %zu/%zu", mpd_char_token(t, ppi), pos, a->sz);
     LOG("\t");
     for (size_t i = 0; i < a->sz; i++)
     {
@@ -131,7 +131,6 @@ token_btree_t* mp_createAST(const token_array_t array, errcode* control, preproc
                 }
 
                 if (rhs.ptr == NULL || lhs.ptr == NULL || mp_isoperation(lhs.ptr[i-1])) {
-                    token_t a = lhs.ptr[i-1];
                     *control = curr.id + 1;
                     token_t inv = { .type = INVALID };
                     display_unexpected_token(&g_fullarray, &curr, curr.id, ppi);

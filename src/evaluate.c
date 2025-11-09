@@ -53,7 +53,7 @@ static double get_numeric_btree(token_btree_t* BT) {
     }
 }
 
-errcode mp_evaluateAST(token_btree_t** _AST, token_list_t leftright_vars, int num_vars,
+errcode mp_evaluateAST(token_btree_t** _AST, token_list_t leftright_vars, size_t num_vars,
         _out_ double* value_r, _out_ int64_t* value_i) 
 {
     token_btree_t* AST = *_AST;

@@ -18,7 +18,7 @@ int main(void) {
         int64_t out_i = 0.0f;
         token_t x = {.type=LITERAL_CONSTANT, .value_i = 0, .value_r = (double)i};
         mp_evaluateAST(&f.body, &x, 1, &out_r, &out_i);
-        INFO("f(%llu) = %f", i, out_r);
+        INFO("f(%lu) = %f", i, out_r);
     }
     
 

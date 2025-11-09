@@ -104,7 +104,7 @@ token_btree_t* mp_createAST(token_array_t array, errcode* control, preprocessor_
 /*--------Additional------------------------*/
 void mp_token_append(token_list_t *l, token_t t, size_t *occupied, size_t *allocated);
 void mp_freeAST(token_btree_t* tree, void (*deallocator) (void*));
-errcode mp_evaluateAST(token_btree_t** AST, token_list_t leftright_vars, int num_vars,
+errcode mp_evaluateAST(token_btree_t** AST, token_list_t leftright_vars, size_t num_vars,
         _out_ double* value_d, _out_ int64_t* value_i) ;
 const char* mpd_token_type_str(token_category_t t, _bool extended);
 char mpd_char_token(const token_t *t, preprocessor_info_t ppi);

@@ -1,6 +1,6 @@
 TARGET = matpreter
 CC = gcc
-CFLAGS = -Wall -Wextra -std=c17 -Iinclude -g -m64
+CFLAGS = -Wall -Wextra -Werror -std=c17 -Iinclude -g -m64
 
 SRC = demo.c tokenizer.c preprocessor.c parse.c AST.c mpdisplay.c evaluate.c
 OBJ_DIR = build/obj

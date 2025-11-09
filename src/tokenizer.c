@@ -4,11 +4,11 @@ void mp_token_append(token_list_t *l, token_t t, size_t *occupied, size_t *alloc
     if (*allocated == 0) {
         *allocated = 8; // initial capacity
         *l = malloc((*allocated) * sizeof(token_t));
-        if (!*l) { ERROR_INFO("malloc", 1); exit(1); }
+        if (!*l) { ERROR_INFO("malloc", 0x1UL); exit(1); }
     } else if (*occupied >= *allocated) {
         *allocated *= 2;
         *l = realloc(*l, (*allocated) * sizeof(token_t));
-        if (!*l) { ERROR_INFO("realloc", 1); exit(1); }
+        if (!*l) { ERROR_INFO("realloc", 1UL); exit(1); }
     } else if (*occupied > *allocated) {
         ERROR("Memory wrong");
     }
