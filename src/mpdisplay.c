@@ -18,7 +18,7 @@ void mpd_print_ppi_info(preprocessor_info_t ppi) {
 }
 
 
-static const char* mpd_token_type_str(token_category_t t, _bool extended) {
+const char* mpd_token_type_str(token_category_t t, _bool extended) {
     switch (t) {
         case INVALID:           return (extended)? "INVALID" : "#";
         case OPERATION_ADD:     return (extended)? "'+' ADD" : "+";
@@ -46,13 +46,13 @@ void mpd_print_tokens(token_array_t arr, preprocessor_info_t ppi) {
 
         switch (t->type) {
             case LITERAL_VARIABLE:
-                DUMP("[%02zu] '%c'-> %-15s", i, ppi.info.variables[t->value_i].letter, mpd_token_type_str(t->type, 1));
+                DUMP("{%zu} '%c' -> %-15s", t->id, ppi.info.variables[t->value_i].letter,mpd_token_type_str(t->type, 0));
                 break;
             case LITERAL_CONSTANT:
-                DUMP("[%02zu] %g -> %-15s", i, t->value_r, mpd_token_type_str(t->type, 1));
+                DUMP("{%zu} %g -> %-15s",t->id, t->value_r, mpd_token_type_str(t->type, 0));
                 break;
             default:
-                DUMP("[%02zu] %-15s", i, mpd_token_type_str(t->type, 1));
+                DUMP("{%zu} %-15s",t->id, mpd_token_type_str(t->type, 0));
                 break;
         }
     }
@@ -77,6 +77,26 @@ void mpd_print_token(const token_t *t, preprocessor_info_t ppi) {
             break;
         default:
             LOG("%s", mpd_token_type_str(t->type, 0));
+            break;
+    }
+}
+
+char mpd_char_token(const token_t *t, preprocessor_info_t ppi) {
+    if (!t) {
+        return 'n';
+        return;
+    }
+
+    switch (t->type) {
+        case LITERAL_CONSTANT:
+            return t->value_r;
+            break;
+        case LITERAL_VARIABLE:
+            return ppi.info.var_letters[t->value_i];
+            break;
+        default:
+            char* s = mpd_token_type_str(t->type, 0);
+            return s[0];
             break;
     }
 }

@@ -1,4 +1,7 @@
 #include <matpreter.h>
+#include <mpdisplay.h>
+
+token_array_t g_fullarray = {0};
 
 /**
  * @todo function bodies
@@ -9,13 +12,6 @@ static token_btree_t* create_binary_tree(token_t root, token_btree_t* lhs, token
     ret->lhs = lhs;
     ret->rhs = rhs;
     return ret;
-}
-
-/**
- * @return empty token array
- */
-static token_array_t create_token_array() {
-    return (token_array_t){NULL, 0, 0, 0};
 }
 
 static void append_token_array(token_array_t* arr, token_t t) {
@@ -38,6 +34,7 @@ static _bool are_outer_parens_balanced(const token_array_t arr) {
     }
     return 1;
 }
+
 /**
  * @brief Split an original token array into two parts
  * @attention - Output arrays are views, NOT copies but pointers inide the original one.
@@ -91,119 +88,124 @@ static token_t split_token_array(
     return (idx >= og.sz)? (token_t){.type = INVALID} : og.ptr[idx];
 }
 
-
-/**
- * @brief create a AST (Abstract Sintax Tree) using a recursive algorithm.
- * @param array token array that its going to work with
- * @param control starting on 1, position of the unexpected token
- * @return the language being described can be represented throw a binary tree.
- */
-token_btree_t* mp_createAST(const token_array_t array, errcode* control) 
-{
-    //Colapse recursion if errorcode > 0
-    if (*control > 0 || array.sz == 0)
-        return create_binary_tree((token_t){.type = INVALID}, NULL, NULL);
-
-    size_t read_idx = 0;
-    token_array_t lhs, rhs;
-    uint32_t seenParen = 0;         //N of seen parenthesis, aka. parenthesis depth
-
-    //Search from lower importance to greater.
-    // ^  >  */  > +-
-
-    // (+) and (-)
-    while(read_idx < array.sz) {
-        token_t curr = array.ptr[read_idx];
-
-        //Parenthesis, First in the chain
-        if      (curr.type == PARENTHESIS_OPEN)  seenParen++;
-        else if (curr.type == PARENTHESIS_CLOSE) seenParen--;
-
-        
-        if ((curr.type == OPERATION_ADD || curr.type == OPERATION_SUB) && seenParen == 0) {
-
-            split_token_array(array, read_idx, &lhs, &rhs);
-
-            //Add implicit zero
-            if ( lhs.ptr == NULL) {
-                token_t zero = (token_t){.type = LITERAL_CONSTANT, .value_i = 0, .value_r = 0.0f};
-                append_token_array(&lhs, zero);
-            }
-
-            //If rhs token isnt a literal -> Unexpected token, colapse recursion
-            if (rhs.ptr == NULL || (rhs.ptr[0].type < TC_LITERALS_IDX && rhs.ptr[0].type != PARENTHESIS_OPEN)) {
-                *control = read_idx + 1;
-                ERROR("Unexpected token: %lld", *control);
-                return create_binary_tree((token_t){.type = INVALID}, NULL, NULL);
-            }
-
-            //Recursion
-            return create_binary_tree(curr, mp_createAST(lhs, control), mp_createAST(rhs, control));
-        }
-        read_idx++;
+static void display_unexpected_token(const token_array_t* a, token_t* t, uint64_t pos, preprocessor_info_t ppi) {
+    ERROR("AST: Unexpected token: '%c' at position: %lu/%lld", mpd_char_token(t, ppi), pos, a->sz);
+    LOG("\t");
+    for (size_t i = 0; i < a->sz; i++)
+    {
+        if (i == pos) LOG("\x1b[31m[");
+        mpd_print_token(a->ptr + i, ppi);
+        if (i == pos) LOG("]\x1b[0m");
     }
-
-    read_idx = 0;
-
-    // (*) and (/)
-    while(read_idx < array.sz) {
-        token_t curr = array.ptr[read_idx];
-
-        //Parenthesis, First in the chain
-        if      (curr.type == PARENTHESIS_OPEN)  seenParen++;
-        else if (curr.type == PARENTHESIS_CLOSE) seenParen--;
-        
-        if ((curr.type == OPERATION_MUL || curr.type == OPERATION_DIV) && seenParen == 0){
-            split_token_array(array, read_idx, &lhs, &rhs);
-
-            //Unexpected token, colapse recursion
-            if (lhs.ptr == NULL || rhs.ptr == NULL || (rhs.ptr[0].type < TC_LITERALS_IDX && rhs.ptr[0].type != PARENTHESIS_OPEN)) {
-                *control = read_idx + 1;
-                ERROR("Unexpected token: %lld", *control);
-                return create_binary_tree((token_t){.type = INVALID}, NULL, NULL);
-            }
-
-            //Recursion
-            return create_binary_tree(curr, mp_createAST(lhs, control), mp_createAST(rhs, control));
-        }
-        read_idx++;
-    }
-    read_idx = 0;
-    //  (^)
-    while (read_idx < array.sz) {
-        token_t curr = array.ptr[read_idx];
-
-        //Parenthesis, First in the chain
-        if      (curr.type == PARENTHESIS_OPEN)  seenParen++;
-        else if (curr.type == PARENTHESIS_CLOSE) seenParen--;
-        
-        if ((curr.type == OPERATION_EXP) && seenParen == 0){
-            split_token_array(array, read_idx, &lhs, &rhs);
-
-            //Unexpected token, colapse recursion
-            if (lhs.ptr == NULL || rhs.ptr == NULL || (rhs.ptr[0].type < TC_LITERALS_IDX && rhs.ptr[0].type != PARENTHESIS_OPEN)) {
-                *control = read_idx + 1;
-                ERROR("Unexpected token: %lld", *control);
-                return create_binary_tree((token_t){.type = INVALID}, NULL, NULL);
-            }
-
-            //Recursion
-            return create_binary_tree(curr, mp_createAST(lhs, control), mp_createAST(rhs, control));
-        }
-        read_idx++;
-    }
-
-    read_idx = 0;
+    NL();NL();
     
-    //IF array is only a literal
-    if (array.sz == 1) 
-        return create_binary_tree(array.ptr[0], NULL, NULL);
-    else {
-        *control = 1;
-        return create_binary_tree((token_t){.type = INVALID}, NULL, NULL);
+}
+
+/* assume token_array_t, token_t, token_btree_t, TC_LITERALS_IDX etc. are defined */
+
+token_btree_t* mp_createAST(const token_array_t array, errcode* control, preprocessor_info_t ppi, _bool b_firstIter) {
+    //If first iteration, save full array for error display
+    if (b_firstIter) g_fullarray = array;
+    if (!control) return NULL;
+    if (*control > 0 || array.sz == 0) {
+        token_t inv = { .type = INVALID };
+        return create_binary_tree(inv, NULL, NULL);
     }
 
+    token_array_t lhs = {0}, rhs = {0};
+
+    // --- 1) + and -  (left-associative)  scan right->left
+    {
+        int depth = 0;
+        for (int i = array.sz - 1; i >= 0; --i) {
+            token_t curr = array.ptr[i];
+            if (curr.type == PARENTHESIS_CLOSE) { depth++; continue; }
+            if (curr.type == PARENTHESIS_OPEN)  { depth--; continue; }
+
+            if (depth == 0 && (curr.type == OPERATION_ADD || curr.type == OPERATION_SUB)) {
+                split_token_array(array, i, &lhs, &rhs);
+
+                if (lhs.ptr == NULL) { // unary minus: turn into (0 - rhs)
+                    token_t zero = { .type = LITERAL_CONSTANT, .value_r = 0.0 };
+                    append_token_array(&lhs, zero);
+                }
+
+                if (rhs.ptr == NULL || lhs.ptr == NULL || mp_isoperation(lhs.ptr[i-1])) {
+                    token_t a = lhs.ptr[i-1];
+                    *control = curr.id + 1;
+                    token_t inv = { .type = INVALID };
+                    display_unexpected_token(&g_fullarray, &curr, curr.id, ppi);
+                    return create_binary_tree(inv, NULL, NULL);
+                }
+
+                return create_binary_tree(curr, mp_createAST(lhs, control, ppi, 0), mp_createAST(rhs, control, ppi, 0));
+            }
+        }
+    }
+
+    // --- 2) * and / (left-associative) scan right->left
+    {
+        int depth = 0;
+        for (int i = array.sz - 1; i >= 0; --i) {
+            token_t curr = array.ptr[i];
+            if (curr.type == PARENTHESIS_CLOSE) { depth++; continue; }
+            if (curr.type == PARENTHESIS_OPEN)  { depth--; continue; }
+
+            if (depth == 0 && (curr.type == OPERATION_MUL || curr.type == OPERATION_DIV)) {
+                split_token_array(array, i, &lhs, &rhs);
+                if (rhs.ptr == NULL || lhs.ptr == NULL || mp_isoperation(lhs.ptr[i-1])) {
+                    mpd_print_token(&lhs.ptr[i-1], ppi);
+                    *control = curr.id + 1;
+                    token_t inv = { .type = INVALID };
+                    display_unexpected_token(&g_fullarray, &curr, curr.id, ppi);
+                    return create_binary_tree(inv, NULL, NULL);
+                }
+                return create_binary_tree(curr, mp_createAST(lhs, control, ppi, 0), mp_createAST(rhs, control, ppi, 0));
+            }
+        }
+    }
+
+    // --- 3) ^ exponent (right-associative) scan left->right
+    {
+        int depth = 0;
+        for (size_t i = 0; i < array.sz; ++i) {
+            token_t curr = array.ptr[i];
+            if (curr.type == PARENTHESIS_OPEN) { depth++; continue; }
+            if (curr.type == PARENTHESIS_CLOSE) { depth--; continue; }
+
+            if (depth == 0 && curr.type == OPERATION_EXP) {
+                split_token_array(array, i, &lhs, &rhs);
+                if (lhs.ptr == NULL || rhs.ptr == NULL || mp_isoperation(rhs.ptr[0])) {
+                    mpd_print_token(&rhs.ptr[0], ppi);
+                    *control = curr.id + 1;
+                    token_t inv = { .type = INVALID };
+                    display_unexpected_token(&g_fullarray, &curr, curr.id, ppi);
+                    return create_binary_tree(inv, NULL, NULL);
+                }
+                return create_binary_tree(curr, mp_createAST(lhs, control, ppi, 0), mp_createAST(rhs, control, ppi, 0));
+            }
+        }
+    }
+
+    // Base case: single literal/variable or parenthesized expression
+    if (array.sz == 1) {
+        return create_binary_tree(array.ptr[0], NULL, NULL);
+    }
+
+    // If wrapped in parentheses: strip them and recurse
+    if (array.sz >= 2 && array.ptr[0].type == PARENTHESIS_OPEN && array.ptr[array.sz-1].type == PARENTHESIS_CLOSE) {
+        // verify they balance as outer pair (helper function recommended)
+        token_array_t inner = { .ptr = array.ptr + 1, .sz = array.sz - 2 };
+        return mp_createAST(inner, control, ppi, 0);
+    }
+
+    // Unexpected structure
+    *control = -1;
+    token_t inv = { .type = INVALID };
+    display_unexpected_token(&array, &(token_t){.type = INVALID}, -1, ppi);
+    return create_binary_tree(inv, NULL, NULL);
 }
+
 
 /**
  * Recursive freeing of an AST

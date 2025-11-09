@@ -22,7 +22,6 @@ void mp_token_append(token_list_t *l, token_t t, size_t *occupied, size_t *alloc
  * @return the list of tokens
  */
 token_array_t mp_tokenize(preprocessor_info_t ppi) {
-    INFO("tokenize received %s", ppi.body);
 
     token_array_t a = {0};
     token_list_t list = NULL;
@@ -33,17 +32,16 @@ token_array_t mp_tokenize(preprocessor_info_t ppi) {
     char *ptr = ppi.body;
     char number[32];
     int8_t parenthesis_weight = 0;
+    uint64_t id = 0;
 
      //Add implicit * in expressions like 7x -> 7*x, or 3(...) -> 3*(...)
     _bool left_add_mul = 0;    
 
-    //Implicit multiplication token e.g 7x -> 7, '*', 'x'
-    token_t mul_token = {OPERATION_MUL, 0, 0};
-    mul_token.type = OPERATION_MUL;
 
 Init:
     memset(number, 0, sizeof(number));
-    token_t curr = {INVALID, 0, 0};
+    token_t curr = {INVALID, 0, 0, .id = id};
+    token_t mul_token = {.type = OPERATION_MUL, .value_i = 0, .id = id++};
 
     switch (*ptr) {
         case 0: goto exit;
@@ -55,7 +53,10 @@ Init:
 
         case '(':
             curr.type = PARENTHESIS_OPEN;
-            if (left_add_mul) mp_token_append(&list, mul_token, &occupied, &allocated);
+            if (left_add_mul) {
+                mp_token_append(&list, mul_token, &occupied, &allocated);
+                curr.id = ++id;
+            }
             left_add_mul = 0;
             parenthesis_weight++;
             ptr++; mp_token_append(&list, curr, &occupied, &allocated); goto Init;
@@ -70,11 +71,15 @@ Init:
             if (isdigit(*ptr) || *ptr == '.') {
                 if (left_add_mul) {
                     mp_token_append(&list, mul_token, &occupied, &allocated);
+                    curr.id = ++id;
                 }
                 left_add_mul = 0;
                 goto number;
             } else if (isalpha(*ptr)) {
-                if (left_add_mul) mp_token_append(&list, mul_token, &occupied, &allocated);
+                if (left_add_mul) {
+                    mp_token_append(&list, mul_token, &occupied, &allocated);
+                    curr.id = ++id;
+                }
                 left_add_mul = 0;
                 goto variable;
             } else {

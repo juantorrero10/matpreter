@@ -9,19 +9,19 @@
 
 
 int main(void) {
-    token_btree_t* f = mp_parse("f(x) = x^3 - 4x^2 + 2");
-    
+    function_t f = mp_parse("f(x) = -0.2x^5 + 1.5x^4 - 3x^3 + 2x^2 + 4x - 5");
+    if (!f.body) return 1;
     //Evaluate f(0) to f(9)
     for (size_t i = 0; i < 10; i++)
     {
         double out_r = 0.0f;
         int64_t out_i = 0.0f;
         token_t x = {.type=LITERAL_CONSTANT, .value_i = 0, .value_r = (double)i};
-        mp_evaluateAST(f, &x, 1, &out_r, &out_i);
+        mp_evaluateAST(&f.body, &x, 1, &out_r, &out_i);
         INFO("f(%llu) = %f", i, out_r);
     }
     
 
-    mp_freeAST(f, free);
+    mp_free_func(&f, free);
     return 0;
 }

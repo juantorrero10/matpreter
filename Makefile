@@ -9,13 +9,17 @@ SRC_DIR = src
 OBJ = $(SRC:%.c=$(OBJ_DIR)/%.o)
 BIN = $(BIN_DIR)/$(TARGET)
 
+# libraries, m -> math lib
+LIB = m
+LIB_FLAG = $(addprefix -l, $(LIB))
+
 # --- Default target ---
 all: $(BIN)
 
 # --- Build final executable ---
 $(BIN): $(OBJ) | $(BIN_DIR)
 	@echo "Linking -> $@"
-	$(CC) $(CFLAGS) -o $@ $(OBJ)
+	$(CC) $(CFLAGS) -o $@ $(OBJ) $(LIB_FLAG)
 
 # --- Compile each .c file into build/obj ---
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)

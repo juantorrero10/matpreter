@@ -61,6 +61,7 @@ typedef struct _token_type {
     token_category_t type;
     int64_t value_i;
     double value_r;
+    uint64_t id;
 }token_t;
 
 typedef token_t* token_list_t;
@@ -77,10 +78,16 @@ typedef struct _token_binary_tree_ast {
     struct _token_binary_tree_ast* lhs;
     struct _token_binary_tree_ast* rhs;
 }token_btree_t;
+
+typedef struct _function_def {
+    token_btree_t *body;
+    preprocessor_info_t ppi;
+}function_t;
+
 /*-------------FUNCTIONS-----------------*/
 
 /*-------------------MAIN CHAIN----------------------------------*/
-token_btree_t* mp_parse(const char* instruction);/*˥
+function_t mp_parse(const char* instruction);/*˥
                    _________________________˩
                   ꜒
                   ↓                                                                   */
@@ -90,13 +97,19 @@ preprocessor_info_t mp_preprocessor(const char *instruction);
                      ↓                                                                */
 token_array_t mp_tokenize(preprocessor_info_t ppi);
 /*                   ꜖___________________________________________________
-                                                                         ˥            */
-token_btree_t* mp_createAST(token_array_t array, errcode* control);/*<---˩            */
+                                                                         ˥            
+                                                                         ↓              */
+token_btree_t* mp_createAST(token_array_t array, errcode* control, preprocessor_info_t ppi, _bool b_firstIter);
 
 /*--------Additional------------------------*/
 void mp_token_append(token_list_t *l, token_t t, size_t *occupied, size_t *allocated);
 void mp_freeAST(token_btree_t* tree, void (*deallocator) (void*));
-errcode mp_evaluateAST(token_btree_t* AST, token_list_t leftright_vars, int num_vars,
+errcode mp_evaluateAST(token_btree_t** AST, token_list_t leftright_vars, int num_vars,
         _out_ double* value_d, _out_ int64_t* value_i) ;
+const char* mpd_token_type_str(token_category_t t, _bool extended);
+char mpd_char_token(const token_t *t, preprocessor_info_t ppi);
+void mp_free_func(function_t* f, void (*deallocator)(void*));
+
+
 
 #endif // DEFS_H_

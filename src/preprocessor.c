@@ -9,7 +9,6 @@ static void remove_spaces(char *str) {
     }
     *dst = '\0';
 }
-
 preprocessor_info_t mp_preprocessor(const char *instruction) {
     preprocessor_info_t pre = {0};
     pre.type = i_definition;  // for now, assume all inputs are definitions
@@ -72,9 +71,10 @@ preprocessor_info_t mp_preprocessor(const char *instruction) {
     }
     pre.info.var_count = var_count;
 
+    
 _return:
     // --- 5. Copy body ---
-    pre.body = malloc(strlen(rhs) + 1);
+    pre.body = malloc(strlen(rhs) + 1) ;
     strcpy(pre.body, rhs);
 
     return pre;
